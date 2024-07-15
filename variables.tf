@@ -16,7 +16,9 @@ variable "username" {
   default     = "thomas.tisseron@efrei.net"
 }
 
-variable "ssh_public_key_path" {
-  description = "SSH public key"
-  default     = "C:/Users/Utilisateur/.ssh/id_rsa.pub"
+variable "password" {
+  description = "The admin password for the VM"
+  type        = string
+  default     = "azertyuioP1"
+  sensitive   = true
 }

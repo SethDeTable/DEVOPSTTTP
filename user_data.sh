@@ -1,27 +1,27 @@
 #!/bin/bash
 # Install Docker
-yum update -y
-amazon-linux-extras install docker -y
-service docker start
-usermod -a -G docker ec2-user
+apt-get update -y
+apt-get install -y docker.io
+systemctl start docker
+usermod -aG docker ${USER}
 
 # Install Git
-yum install git -y
+apt-get install -y git
 
 # Clone the API repository
 git clone https://github.com/SethDeTable/DEVOPSTTTP
 
 # Build and run the Docker container
-cd /home/ec2-user/api
+cd DEVOPSTTTP
 docker build -t my-api .
 docker run -d -p 8080:8080 my-api
 
 # Install Nginx
-amazon-linux-extras install nginx1.12 -y
-service nginx start
+apt-get install -y nginx
+systemctl start nginx
 
 # Configure Nginx to proxy requests to the API
-cat <<EOT > /etc/nginx/conf.d/api.conf
+cat <<EOT > /etc/nginx/sites-available/api
 server {
     listen 80;
 
@@ -35,5 +35,5 @@ server {
 }
 EOT
 
-# Restart Nginx to apply the configuration
-service nginx restart
+ln -s /etc/nginx/sites-available/api /etc/nginx/sites-enabled/
+systemctl restart nginx

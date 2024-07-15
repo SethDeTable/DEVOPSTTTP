@@ -51,21 +51,9 @@ resource "azurerm_network_security_group" "my_terraform_nsg" {
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
-
   security_rule {
     name                       = "HTTP"
     priority                   = 1002
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "80"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-    security_rule {
-    name                       = "HTTP1"
-    priority                   = 1003
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "Tcp"
@@ -137,11 +125,28 @@ resource "azurerm_linux_virtual_machine" "my_terraform_vm" {
 
   computer_name  = "hostname"
   admin_username = var.username
-  custom_data    = filebase64("user_data.sh")
+  admin_password = var.password
+  /*custom_data    = filebase64("user_data.sh")*/
+  disable_password_authentication = false
 
-  admin_ssh_key {
-    username   = var.username
-    public_key = file(var.ssh_public_key_path)
+  connection {
+    type     = "ssh"
+    user     = var.username
+    password = var.password
+    host     = self.public_ip
+    timeout  = "3m"
+  }
+
+  provisioner "file" {
+    source      = "C:/Users/Utilisateur/user_data.sh"
+    destination = "/tmp/user_data.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /home/azureuser/user_data.sh",
+      "/home/azureuser/user_data.sh args"
+    ]
   }
 
   boot_diagnostics {
