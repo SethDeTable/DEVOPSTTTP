@@ -64,7 +64,7 @@ resource "azurerm_network_security_group" "my_terraform_nsg" {
     destination_address_prefix = "*"
   }
     security_rule {
-    name                       = "HTTP"
+    name                       = "HTTP1"
     priority                   = 1003
     direction                  = "Inbound"
     access                     = "Allow"
@@ -141,7 +141,7 @@ resource "azurerm_linux_virtual_machine" "my_terraform_vm" {
 
   admin_ssh_key {
     username   = var.username
-    public_key = var.ssh_public_key
+    public_key = file(var.ssh_public_key_path)
   }
 
   boot_diagnostics {
