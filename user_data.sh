@@ -9,7 +9,7 @@ usermod -a -G docker ec2-user
 yum install git -y
 
 # Clone the API repository
-git clone https://github.com/yourusername/your-api-repo.git /home/ec2-user/api
+git clone https://github.com/SethDeTable/DEVOPSTTTP
 
 # Build and run the Docker container
 cd /home/ec2-user/api

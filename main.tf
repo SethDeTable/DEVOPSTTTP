@@ -1,7 +1,10 @@
+
+# Generate random name for resource group
 resource "random_pet" "rg_name" {
   prefix = var.resource_group_name_prefix
 }
 
+# Create resource group
 resource "azurerm_resource_group" "rg" {
   location = var.resource_group_location
   name     = random_pet.rg_name.id
@@ -23,7 +26,7 @@ resource "azurerm_subnet" "my_terraform_subnet" {
   address_prefixes     = ["10.0.1.0/24"]
 }
 
-# Create public IPs
+# Create public IP
 resource "azurerm_public_ip" "my_terraform_public_ip" {
   name                = "myPublicIP"
   location            = azurerm_resource_group.rg.location
@@ -31,7 +34,7 @@ resource "azurerm_public_ip" "my_terraform_public_ip" {
   allocation_method   = "Dynamic"
 }
 
-# Create Network Security Group and rule
+# Create Network Security Group and rules
 resource "azurerm_network_security_group" "my_terraform_nsg" {
   name                = "myNetworkSecurityGroup"
   location            = azurerm_resource_group.rg.location
@@ -45,6 +48,29 @@ resource "azurerm_network_security_group" "my_terraform_nsg" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "22"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "HTTP"
+    priority                   = 1002
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "80"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+    security_rule {
+    name                       = "HTTP"
+    priority                   = 1003
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "8080"
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
@@ -64,7 +90,7 @@ resource "azurerm_network_interface" "my_terraform_nic" {
   }
 }
 
-# Connect the security group to the network interface
+# Associate Network Security Group with the network interface
 resource "azurerm_network_interface_security_group_association" "example" {
   network_interface_id      = azurerm_network_interface.my_terraform_nic.id
   network_security_group_id = azurerm_network_security_group.my_terraform_nsg.id
@@ -76,7 +102,6 @@ resource "random_id" "random_id" {
     # Generate a new ID only when a new resource group is defined
     resource_group = azurerm_resource_group.rg.name
   }
-
   byte_length = 8
 }
 
@@ -112,13 +137,15 @@ resource "azurerm_linux_virtual_machine" "my_terraform_vm" {
 
   computer_name  = "hostname"
   admin_username = var.username
+  custom_data    = filebase64("user_data.sh")
 
   admin_ssh_key {
     username   = var.username
-    public_key = azapi_resource_action.ssh_public_key_gen.output.publicKey
+    public_key = var.ssh_public_key
   }
 
   boot_diagnostics {
     storage_account_uri = azurerm_storage_account.my_storage_account.primary_blob_endpoint
   }
 }
+
