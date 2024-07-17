@@ -31,7 +31,12 @@ resource "azurerm_public_ip" "my_terraform_public_ip" {
   name                = "myPublicIP"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
-  allocation_method   = "Dynamic"
+  allocation_method   = "Static"
+}
+
+data "azurerm_public_ip" "my_data_public_ip" {
+  name                = azurerm_public_ip.my_terraform_public_ip.name
+  resource_group_name = azurerm_public_ip.my_terraform_public_ip.resource_group_name
 }
 
 # Create Network Security Group and rules
@@ -126,16 +131,53 @@ resource "azurerm_linux_virtual_machine" "my_terraform_vm" {
   computer_name  = "hostname"
   admin_username = var.username
   admin_password = var.password
-  /*custom_data    = filebase64("user_data.sh")*/
+  /*custom_data    = filebase64("C:/Users/Utilisateur/Documents/vscode/DEVOPS/user_data.sh")*/
   disable_password_authentication = false
 
-  connection {
-    type     = "ssh"
-    user     = var.username
-    password = var.password
-    host     = self.public_ip
-    timeout  = "3m"
+  provisioner "remote-exec" {
+    inline = [
+      "echo 'Waiting for VM to be ready...'"
+    ]
+
+    connection {
+      type     = "ssh"
+      user     = var.username
+      password = var.password
+      host     = data.azurerm_public_ip.my_data_public_ip.ip_address
+      timeout  = "2m"
+    }
   }
+
+  provisioner "file" {
+    source      = "C:/Users/Utilisateur/Documents/vscode/DEVOPS/user_data.sh"
+    destination = "/home/thomas.tisseron@efrei.net/user_data.sh"
+
+    connection {
+      type     = "ssh"
+      user     = var.username
+      password = var.password
+      host     = data.azurerm_public_ip.my_data_public_ip.ip_address
+      timeout  = "2m"
+    }
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /home/thomas.tisseron@efrei.net/user_data.sh",
+      "/home/thomas.tisseron@efrei.net/user_data.sh args"
+    ]
+
+    connection {
+      type     = "ssh"
+      user     = var.username
+      password = var.password
+      host     = data.azurerm_public_ip.my_data_public_ip.ip_address
+      timeout  = "3m"
+    }
+  }
+
+
+
 
   provisioner "file" {
     source      = "C:/Users/Utilisateur/user_data.sh"
@@ -147,7 +189,16 @@ resource "azurerm_linux_virtual_machine" "my_terraform_vm" {
       "chmod +x /home/azureuser/user_data.sh",
       "/home/azureuser/user_data.sh args"
     ]
+
+    connection {
+      type     = "ssh"
+      user     = var.username
+      password = var.password
+      host     = data.azurerm_public_ip.my_data_public_ip
+      timeout  = "3m"
+    }
   }
+
 
   boot_diagnostics {
     storage_account_uri = azurerm_storage_account.my_storage_account.primary_blob_endpoint

@@ -23,7 +23,7 @@ systemctl start nginx
 # Configure Nginx to proxy requests to the API
 cat <<EOT > /etc/nginx/sites-available/api
 server {
-    listen 80;
+    listen 8080;
 
     location / {
         proxy_pass http://127.0.0.1:8080;
